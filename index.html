@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Background Remover</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #05a885 0%, #cfbd19 100%);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: #fff;
+    }
+    .container {
+      background: #6dad06;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+      max-width: 900px;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    h1 {
+      margin-bottom: 10px;
+      font-weight: 600;
+      font-size: 2rem;
+      letter-spacing: 1px;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    label[for="upload"] {
+      background: linear-gradient(135deg, #05a885 0%, #cfbd19 100%);
+      padding: 12px 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: background 0.3s ease;
+      display: inline-block;
+      user-select: none;
+    }
+    label[for="upload"]:hover {
+      background: linear-gradient(135deg, #6802ac 0%, #037786 100%);
+    }
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    button {
+      background: #ff624d;
+      border: none;
+      color: white;
+      padding: 14px 35px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      user-select: none;
+      min-width: 140px;
+    }
+    button:disabled {
+      background: #71be77;
+      cursor: not-allowed;
+    }
+    button:hover:not(:disabled) {
+      background: #ff4600;
+    }
+    .images-wrapper {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .image-container {
+      background: #85b614;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      flex: 1 1 400px;
+      max-width: 450px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    img {
+      width: 100%;
+      max-height: 350px;
+      object-fit: contain;
+      border-radius: 12px;
+      background: white;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Background Remover</h1>
+  <label for="upload">Choose an Image</label>
+  <input type="file" id="upload" accept="image/*" />
+
+  <div class="buttons">
+    <button id="removeBtn" disabled>Remove Background</button>
+    <button id="downloadBtn" style="display:none;">Download Image</button>
+  </div>
+
+  <div class="images-wrapper">
+    <div class="image-container">
+      <h3>Original Image</h3>
+      <img id="original" alt="Original upload preview" />
+    </div>
+    <div class="image-container">
+      <h3>Background Removed</h3>
+      <img id="result" alt="Background removed result" />
+    </div>
+  </div>
+</div>
+
+<script>
+const upload = document.getElementById("upload");
+const originalImg = document.getElementById("original");
+const resultImg = document.getElementById("result");
+const removeBtn = document.getElementById("removeBtn");
+const downloadBtn = document.getElementById("downloadBtn");
+
+let selectedFile, removedBgUrl;
+
+upload.addEventListener("change", () => {
+  if (upload.files.length > 0) {
+    selectedFile = upload.files[0];
+    originalImg.src = URL.createObjectURL(selectedFile);
+    originalImg.style.display = "block";
+    resultImg.style.display = "none";
+    removedBgUrl = null;
+    removeBtn.disabled = false;
+    downloadBtn.style.display = "none";
+  }
+});
+
+removeBtn.addEventListener("click", async () => {
+  if (!selectedFile) return;
+  removeBtn.disabled = true;
+  removeBtn.textContent = "Processing...";
+  resultImg.style.display = "none";
+  downloadBtn.style.display = "none";
+
+  const formData = new FormData();
+  formData.append("image_file", selectedFile);
+  formData.append("size", "auto");
+
+  try {
+    const response = await fetch("/api/removebg", {
+      method: "POST",
+      body: formData,
+    });
+    if (!response.ok) throw new Error("Error: " + response.statusText);
+    const blob = await response.blob();
+    removedBgUrl = URL.createObjectURL(blob);
+    resultImg.src = removedBgUrl;
+    resultImg.style.display = "block";
+    downloadBtn.style.display = "inline-block";
+  } catch (err) {
+    alert("Failed to remove background: " + err.message);
+  } finally {
+    removeBtn.disabled = false;
+    removeBtn.textContent = "Remove Background";
+  }
+});
+
+downloadBtn.addEventListener("click", () => {
+  if (!removedBgUrl) return;
+  const a = document.createElement("a");
+  a.href = removedBgUrl;
+  a.download = "background-removed.png";
+  a.click();
+});
+</script>
+</body>
+</html>

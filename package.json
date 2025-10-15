@@ -1,0 +1,10 @@
+{
+  "name": "rocoricky",
+  "version": "1.0.0",
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "form-data": "^4.0.0",
+    "formidable": "^3.5.1"
+  },
+  "type": "module"
+}
